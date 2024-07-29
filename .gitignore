@@ -1,0 +1,3 @@
+*.pth
+*/pycache/*
+*.pyc
