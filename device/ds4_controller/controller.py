@@ -1,32 +1,5 @@
-from enum import Enum
 import inspect
-
-
-class ButtonEvent(Enum):
-    PRESS = 0
-    RELEASE = 1
-    PRESS_HOLD = 2
-    RELEASE_HOLD = 3
-
-
-class Button:
-    def __init__(self) -> None:
-        super().__init__()
-        self._button = 0
-        self._last_button_hold = 0
-        self.event = ButtonEvent.RELEASE_HOLD
-
-    def update(self, button):
-        self._last_button_hold = self._button
-        self._button = button
-        if self._button == 0 and self._last_button_hold == 1:
-            self.event = ButtonEvent.RELEASE
-        elif self._button == 0 and self._last_button_hold == 0:
-            self.event = ButtonEvent.RELEASE_HOLD
-        elif self._button == 1 and self._last_button_hold == 0:
-            self.event = ButtonEvent.PRESS
-        elif self._button == 1 and self._last_button_hold == 1:
-            self.event = ButtonEvent.PRESS_HOLD
+from ..device_base.button import Button
 
 
 class Ds4Controller:
@@ -51,9 +24,29 @@ class Ds4Controller:
             "button_trackpad",
             "button_ps",
         ]
+        self._axis_names = [
+            "axis_left_x",
+            "axis_left_y",
+            "axis_right_x",
+            "axis_right_y",
+        ]
+        self._plug_names = [
+            "plug_usb",
+            "plug_audio",
+            "plug_mic",
+        ]
         self.buttons = {name: Button() for name in self._button_names}
+        self.plugs = {name: 0 for name in self._plug_names}
+        self.axis = {name: 0.0 for name in self._axis_names}
+        self.battery_percentage = 0.0
 
     def update(self, data) -> None:
         for name, obj in inspect.getmembers(data):
             if name in self._button_names:
                 self.buttons[name].update(obj)
+            elif name in self._plug_names:
+                self.plugs[name].update({name: obj})
+            elif name in self._axis_names:
+                self.axis[name].update({name: obj})
+            elif name == "battery_percentage":
+                self.battery_percentage = obj
