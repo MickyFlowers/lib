@@ -1,7 +1,7 @@
 import cv2
 import cv2
 import numpy as np
-from ..sensor.camera import Camera
+from ..device.sensor.camera import Camera
 
 
 class KpMatchAlgo:

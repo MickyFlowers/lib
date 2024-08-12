@@ -1,5 +1,5 @@
 from . import kp_matcher
-from ..sensor.camera import Camera
+from ..device.sensor.camera import Camera
 import numpy as np
 from . import metric
 import cv2
