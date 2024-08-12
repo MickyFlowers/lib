@@ -5,7 +5,7 @@ import numpy as np
 
 
 class UR:
-    def __init__(self, ip: str) -> None:
+    def __init__(self, ip: str, use_gripper=False) -> None:
         self.rtde_c = rtde_control.RTDEControlInterface(ip)
         self.rtde_r = rtde_receive.RTDEReceiveInterface(ip)
 
@@ -20,7 +20,7 @@ class UR:
         trans_matrix[:3, :3] = rot_matrix
         trans_matrix[3:, 3:] = rot_matrix
         return trans_matrix @ tcp_vel
-
+    
     def applyCameraVel(self, vel, extrinsic_matrix, acc=0.25, time=0.0):
         linear_vel = vel[:3]
         angular_vel = vel[3:]
