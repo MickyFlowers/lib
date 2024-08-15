@@ -1,5 +1,5 @@
-import scipy.spatial.transform as R
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 
 def linkVelTransform(vel, trans_matrix):
@@ -35,3 +35,11 @@ def velTransform(vel, rot_matrix):
     trans_matrix[:3, :3] = rot_matrix
     trans_matrix[3:, 3:] = rot_matrix
     return trans_matrix @ vel
+
+
+def vecToMatrix(rvec, tvec):
+    matrix = np.eye(4)
+    rot_matrix = R.from_rotvec(rvec).as_matrix()
+    matrix[:3, :3] = rot_matrix
+    matrix[:3, 3] = tvec
+    return matrix

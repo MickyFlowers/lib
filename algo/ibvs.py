@@ -57,7 +57,6 @@ class IBVS:
 
         mean_L = (cur_L + ref_L) / 2.0
         vel = np.linalg.lstsq(mean_L, error)[0]
-
         return vel
 
     def cal_vel_from_img(

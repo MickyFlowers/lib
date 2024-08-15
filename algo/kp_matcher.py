@@ -5,7 +5,7 @@ from ..device.sensor.camera import Camera
 
 
 class KpMatchAlgo:
-    def __init__(self, kp_extractor: str = "SIFT", match_threshold=0.75) -> None:
+    def __init__(self, kp_extractor: str = "SIFT", match_threshold=0.5) -> None:
         self.match_threshold = match_threshold
         self.kp_extractor = self._parser_kp_extractor(kp_extractor)
         self.matcher = cv2.FlannBasedMatcher()
@@ -69,7 +69,7 @@ class KpMatchAlgo:
             _, mask = cv2.findEssentialMat(
                 kp1_array.reshape(-1, 1, 2),
                 kp2_array.reshape(-1, 1, 2),
-                camera.intrinsic,
+                camera.intrinsics_matrix,
                 cv2.RANSAC,
                 0.999,
                 3.0,
