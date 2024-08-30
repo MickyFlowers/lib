@@ -20,5 +20,5 @@ class Manipulator(ABC):
         pass
 
     @abstractmethod
-    def pose(self) -> np.ndarray:
+    def tcp_pose(self) -> np.ndarray:
         pass

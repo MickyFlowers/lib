@@ -37,7 +37,7 @@ class UR(Manipulator):
         self.rtde_c.speedL(world_vel, acc, time)
 
     @property
-    def pose(self) -> np.ndarray:
+    def tcp_pose(self) -> np.ndarray:
         pose_vec = self.rtde_r.getActualTCPPose()
         trans_matrix = np.eye(4)
         rot_matrix = R.from_rotvec(pose_vec[3:]).as_matrix()
