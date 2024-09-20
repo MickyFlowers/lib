@@ -21,16 +21,16 @@ class UR(Manipulator):
         trans_matrix[:3, 3] = pose_vec[:3]
         return self.base_to_world @ trans_matrix
 
-    def applyTcpVel(self, tcp_vel: np.ndarray, acc=0.25, time=0.0) -> None:
+    def applyTcpVel(self, tcp_vel: np.ndarray, acc=1.0, time=0.0) -> None:
         pose_vec = self.rtde_r.getActualTCPPose()
         rot_matrix = R.from_rotvec(pose_vec[3:]).as_matrix()
         base_vel = velTransform(tcp_vel, rot_matrix)
         self.rtde_c.speedL(base_vel, acc, time)
 
-    def applyVel(self, vel: np.ndarray, acc=0.25, time=0.0) -> None:
+    def applyVel(self, vel: np.ndarray, acc=1.0, time=0.0) -> None:
         self.rtde_c.speedL(vel, acc, time)
 
-    def applyWorldVel(self, world_vel: np.ndarray, acc=0.25, time=0.0) -> None:
+    def applyWorldVel(self, world_vel: np.ndarray, acc=1.0, time=0.0) -> None:
         pose_vec = self.rtde_r.getActualTCPPose()
         rot_matrix = self.base_to_world @ R.from_rotvec(pose_vec[3:]).as_matrix()
         world_vel = velTransform(world_vel, rot_matrix)
@@ -54,3 +54,14 @@ class UR(Manipulator):
         self.rtde_c.stopScript()
         self.rtde_c.disconnect()
         self.rtde_r.disconnect()
+
+    def moveToPose(self, pose, vel=0.25, acc=1.2, asynchronous=False):
+        rot_matrix = pose[:3, :3]
+        pos_vec = pose[:3, 3]
+        rot_vec = R.from_matrix(rot_matrix).as_rotvec()
+        pose = np.concatenate((pos_vec, rot_vec))
+        self.rtde_c.moveL(pose, vel, acc, asynchronous)
+
+    def moveToWorldPose(self, pose, vel=0.25, acc=1.2, asynchronous=False):
+        world_pose = self.base_to_world @ pose
+        self.moveToPose(world_pose, vel, acc, asynchronous)

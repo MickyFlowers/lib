@@ -4,43 +4,19 @@ import cv2
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import matplotlib
+
+matplotlib.use("qtagg")
 import glob
 
 
 class SAM:
     def __init__(
         self,
-        input_path: str,
-        output_path: str,
         model_type: str = "default",
         model_path: str = "sam_vit_h_4b8939.pth",
         device: str = "cuda:0",
     ) -> None:
-        self.input_path = input_path
-        self.output_path = output_path
-        self.output_files = os.listdir(self.output_path)
-        os.makedirs(self.output_path, exist_ok=True)
-
-        if os.path.isdir(self.input_path):
-            self.img_paths = glob.glob(os.path.join(self.input_path, "*.jpg"))
-            import re
-
-            def extract_number(filepath):
-                match = re.search(r"img-(\d+).jpg", filepath)
-                if match:
-                    return int(match.group(1))
-                return 0
-
-            self.img_paths.sort(key=extract_number)
-            self.img_paths = [
-                self.img_paths[i]
-                for i in range(0, len(self.img_paths))
-                if os.path.basename(self.img_paths[i]) not in self.output_files
-            ]
-
-        else:
-            self.img_paths = [self.input_path]
         assert model_type in ["default", "vit_h", "vit_b", "vit_l"]
         print(f"Loading Model...")
         print(f"Model Type: {model_type}")
@@ -52,29 +28,39 @@ class SAM:
         self.points = []
         self.background_points = []
         self._current_img_idx = 0
+        self.done = False
 
     def _key_press_event(self, event):
         if event.key == "c":
             self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
             mask_img = np.zeros_like(self.img)
             if self.mask is not None:
-                mask_img[self.mask == 1] = self.img[self.mask == 1]
-            cv2.imwrite(
-                os.path.join(
-                    self.output_path,
-                    os.path.basename(self.img_paths[self._current_img_idx]),
-                ),
-                mask_img,
-            )
+                mask_img[self.mask] = self.img[self.mask]
+            self.mask_img = mask_img
             self.points = []
             self.background_points = []
-            self._current_img_idx += 1
-            self.img = cv2.imread(self.img_paths[self._current_img_idx])
-            self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
-            self.predictor.set_image(self.img)
-            plt.cla()
-            plt.imshow(self.img)
-            self.fig.canvas.draw()
+            if self.mode == "dir":
+                cv2.imwrite(
+                    os.path.join(
+                        self.output_path,
+                        os.path.basename(self.img_paths[self._current_img_idx]),
+                    ),
+                    mask_img,
+                )
+                self._current_img_idx += 1
+                if self._current_img_idx >= len(self.img_paths):
+                    self.done = True
+                    plt.close()
+                    return
+                self.img = cv2.imread(self.img_paths[self._current_img_idx])
+                self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+                self.predictor.set_image(self.img)
+                plt.cla()
+                plt.imshow(self.img)
+                self.fig.canvas.draw()
+            elif self.mode == "img":
+                self.done = True
+                plt.close()
 
     def _mouse_click_event(self, event):
         mask = None
@@ -119,7 +105,7 @@ class SAM:
         plt.imshow(self.img)
         if mask is not None:
             plt.imshow(mask, cmap="cividis", alpha=0.5)
-        self.mask = mask
+        self.mask = mask == 1
         if self.points:
             x, y = zip(*self.points)
             plt.scatter(x, y, c="r", s=20)
@@ -138,7 +124,48 @@ class SAM:
         )
         return result
 
-    def segment(self):
+    def segment_img(self, img):
+        self.mode = "img"
+        self.done = False
+        self.img = img
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        self.predictor.set_image(self.img)
+        self.fig = plt.figure("segment anything")
+        self.fig.canvas.mpl_connect("button_press_event", self._mouse_click_event)
+        self.fig.canvas.mpl_connect("key_press_event", self._key_press_event)
+        plt.imshow(self.img)
+        while not self.done:
+            plt.pause(0.001)
+        return self.mask_img, self.mask
+
+    def segment(self, input_path: str, output_path: str):
+        self.mode = "dir"
+        self.done = False
+        self.input_path = input_path
+        self.output_path = output_path
+        self.output_files = os.listdir(self.output_path)
+        os.makedirs(self.output_path, exist_ok=True)
+
+        if os.path.isdir(self.input_path):
+            self.img_paths = glob.glob(os.path.join(self.input_path, "*.jpg"))
+            import re
+
+            def extract_number(filepath):
+                match = re.search(r"img-(\d+).jpg", filepath)
+                if match:
+                    return int(match.group(1))
+                return 0
+
+            self.img_paths.sort(key=extract_number)
+            self.img_paths = [
+                self.img_paths[i]
+                for i in range(0, len(self.img_paths))
+                if os.path.basename(self.img_paths[i]) not in self.output_files
+            ]
+
+        else:
+            self.img_paths = [self.input_path]
+
         window_name = "segment anything"
         self.fig = plt.figure(window_name)
         self.fig.canvas.mpl_connect("button_press_event", self._mouse_click_event)
@@ -148,5 +175,5 @@ class SAM:
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
         self.predictor.set_image(self.img)
         plt.imshow(self.img)
-        while True:
+        while not self.done:
             plt.pause(0.001)

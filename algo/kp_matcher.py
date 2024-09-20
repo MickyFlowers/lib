@@ -2,6 +2,84 @@ import cv2
 import cv2
 import numpy as np
 from ..device.sensor.camera import Camera
+from .RoMa.romatch import *
+
+
+class RomaMatchAlgo:
+    def __init__(self, model_type="roma_indoor", device="cuda") -> None:
+        self.model_type = model_type
+        self.model = eval(model_type)(device=device)
+        self.device = device
+
+    def match(self, img1: np.ndarray, img2: np.ndarray, mask=None, ransac=True):
+        assert img1 is not None, "Color Image 1 not provided"
+        assert img2 is not None, "Color Image 2 not provided"
+        h1, w1 = img1.shape[:2]
+        h2, w2 = img2.shape[:2]
+        if self.model_type == "tiny_roma_v1_outdoor":
+            warp, certainty = self.model.match(img1, img2)
+        else:
+            warp, certainty = self.model.match(img1, img2, device=self.device)
+        matches, certainty = self.model.sample(warp, certainty)
+        kptsA, kptsB = self.model.to_pixel_coordinates(matches, h1, w1, h2, w2)
+        F, ransac_mask = cv2.findFundamentalMat(
+            kptsA.cpu().numpy(),
+            kptsB.cpu().numpy(),
+            ransacReprojThreshold=0.2,
+            method=cv2.USAC_MAGSAC,
+            confidence=0.999999,
+            maxIters=10000,
+        )
+        kptsA_array = kptsA.cpu().numpy()
+        kptsB_array = kptsB.cpu().numpy()
+        if ransac:
+            ransac_mask = ransac_mask.ravel().astype(bool)
+            kptsA_array = kptsA_array[ransac_mask].reshape(-1, 2)
+            kptsB_array = kptsB_array[ransac_mask].reshape(-1, 2)
+
+        if mask is not None:
+            kptsA_array_int = np.clip(
+                kptsA_array.round().astype(int), [0, 0], [w1 - 1, h1 - 1]
+            )
+            kptsB_array_int = np.clip(
+                kptsB_array.round().astype(int), [0, 0], [w2 - 1, h2 - 1]
+            )
+
+            x1, y1 = kptsA_array_int[:, 0], kptsA_array_int[:, 1]
+            x2, y2 = kptsB_array_int[:, 0], kptsB_array_int[:, 1]
+            mask = mask[y1, x1] & mask[y2, x2]
+            print(mask.sum(), kptsA_array_int.shape[0])
+            mask = ~mask
+
+            kptsA_array = kptsA_array[mask]
+            kptsB_array = kptsB_array[mask]
+        if kptsA_array.shape[0] > 200:
+            samples = np.random.choice(kptsA_array.shape[0], 200, replace=False)
+            kptsA_array = kptsA_array[samples]
+            kptsB_array = kptsB_array[samples]
+        match_img = self._draw_matches(img1, kptsA_array, img2, kptsB_array)
+        return kptsA_array, kptsB_array, match_img
+
+    def _draw_matches(self, img1, keypoints1, img2, keypoints2):
+        img1_height, img1_width = img1.shape[:2]
+        img2_height, img2_width = img2.shape[:2]
+
+        combined_image = np.zeros(
+            (max(img1_height, img2_height), img1_width + img2_width, 3), dtype=np.uint8
+        )
+
+        combined_image[:img1_height, :img1_width] = img1
+
+        combined_image[:img2_height, img1_width : img1_width + img2_width] = img2
+        shifted_keypoints2 = [(x + img1_width, y) for (x, y) in keypoints2]
+
+        for (x1, y1), (x2, y2) in zip(keypoints1, shifted_keypoints2):
+            color = tuple(np.random.randint(0, 255, 3).tolist())
+            cv2.circle(combined_image, (int(x1), int(y1)), 3, color, 1)
+            cv2.circle(combined_image, (int(x2), int(y2)), 3, color, 1)
+            cv2.line(combined_image, (int(x1), int(y1)), (int(x2), int(y2)), color, 1)
+
+        return combined_image
 
 
 class KpMatchAlgo:

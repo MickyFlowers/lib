@@ -131,6 +131,7 @@ class RealSenseCamera(Camera):
         depth_height=480,
         frame_rate=30,
         short_range=True,
+        exposure_time=None,
         align_to=rs.stream.color,
     ):
         super().__init__()
@@ -150,6 +151,12 @@ class RealSenseCamera(Camera):
         profile = self.pipeline.get_active_profile()
         device = profile.get_device()
         depth_sensor = device.first_depth_sensor()
+        color_sensor = device.query_sensors()[1]
+        if exposure_time is not None:
+            color_sensor.set_option(rs.option.enable_auto_exposure, 0)
+            color_sensor.set_option(rs.option.exposure, exposure_time)
+        else:
+            color_sensor.set_option(rs.option.enable_auto_exposure, 1)
         if short_range:
             depth_sensor.set_option(rs.option.visual_preset, 3)
         else:
@@ -215,7 +222,7 @@ class RealSenseCamera(Camera):
         while True:
             self.get_frame()
             out.write(self.color_img)
-            self.show()
+            cv2.imshow("Color Image", self.color_img)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
         out.release()

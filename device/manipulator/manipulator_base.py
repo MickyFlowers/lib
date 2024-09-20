@@ -22,3 +22,11 @@ class Manipulator(ABC):
     @abstractmethod
     def tcp_pose(self) -> np.ndarray:
         pass
+
+    @abstractmethod
+    def moveToWorldPose(self, pose, vel, acc, asynchronous):
+        pass
+
+    @abstractmethod
+    def moveToPose(self, pose, vel, acc, asynchronous):
+        pass

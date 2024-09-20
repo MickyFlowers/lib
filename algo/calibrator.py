@@ -129,7 +129,7 @@ class EyeHandCalibrator:
         count = 0
         while True:
             color_img, _ = self._camera.get_frame()
-            tcp_pose = self._robot.pose
+            tcp_pose = self._robot.tcp_pose
             img_markers, aruco_pose = self._estimatePose(color_img)
             cv2.imshow("camera color img", img_markers)
             key = cv2.waitKey(1)
