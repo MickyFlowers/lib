@@ -7,7 +7,7 @@ import numpy as np
 import logging
 import glob
 
-from .transforms import *
+from .utils.transforms import *
 
 
 class EyeHandCalibrator:

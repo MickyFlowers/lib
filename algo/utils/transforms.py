@@ -43,3 +43,8 @@ def vecToMatrix(rvec, tvec):
     matrix[:3, :3] = rot_matrix
     matrix[:3, 3] = tvec
     return matrix
+
+def calcNormVecFromPoint(origin: np.ndarray, target: np.ndarray) -> np.ndarray:
+    vec = target - origin
+    vec = vec / np.linalg.norm(vec)
+    return vec

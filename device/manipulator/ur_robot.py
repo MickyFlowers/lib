@@ -1,9 +1,10 @@
 import numpy as np
 import rtde_control
 import rtde_receive
-from ...algo.transforms import *
+from ...algo.utils.transforms import *
 from scipy.spatial.transform import Rotation as R
 from .manipulator_base import Manipulator
+import time
 
 
 class UR(Manipulator):
@@ -32,7 +33,7 @@ class UR(Manipulator):
 
     def applyWorldVel(self, world_vel: np.ndarray, acc=1.0, time=0.0) -> None:
         pose_vec = self.rtde_r.getActualTCPPose()
-        rot_matrix = self.base_to_world @ R.from_rotvec(pose_vec[3:]).as_matrix()
+        rot_matrix = np.linalg.inv(self.base_to_world[:3, :3])
         world_vel = velTransform(world_vel, rot_matrix)
         self.rtde_c.speedL(world_vel, acc, time)
 
@@ -63,5 +64,22 @@ class UR(Manipulator):
         self.rtde_c.moveL(pose, vel, acc, asynchronous)
 
     def moveToWorldPose(self, pose, vel=0.25, acc=1.2, asynchronous=False):
-        world_pose = self.base_to_world @ pose
+        world_pose = np.linalg.inv(self.base_to_world) @ pose
         self.moveToPose(world_pose, vel, acc, asynchronous)
+
+    def moveToWorldErrorPose(
+        self, pose, jnt_error, vel=0.25, acc=1.2, asynchronous=False
+    ):
+        tcp_pose = np.linalg.inv(self.base_to_world) @ pose
+        # self.moveToPose(tcp_pose, vel, acc, False)
+        # time.sleep(0.2)
+        # q = self.rtde_r.getActualQ()
+        # q += jnt_error
+        # self.rtde_c.moveJ(q, vel, acc, asynchronous)
+        pos_vec = tcp_pose[:3, 3]
+        rot_matrix = tcp_pose[:3, :3]
+        rot_vec = R.from_matrix(rot_matrix).as_rotvec()
+        pose_vec = np.concatenate((pos_vec, rot_vec))
+        q = self.rtde_c.getInverseKinematics(pose_vec)
+        q += jnt_error
+        self.rtde_c.moveJ(q, vel, acc, asynchronous)
