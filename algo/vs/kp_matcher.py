@@ -11,7 +11,9 @@ class RomaMatchAlgo:
         self.model = eval(model_type)(device=device)
         self.device = device
 
-    def match(self, img1: np.ndarray, img2: np.ndarray, mask=None, ransac=True):
+    def match(
+        self, img1: np.ndarray, img2: np.ndarray, mask=None, ransac=True, camera=None
+    ):
         assert img1 is not None, "Color Image 1 not provided"
         assert img2 is not None, "Color Image 2 not provided"
         h1, w1 = img1.shape[:2]
