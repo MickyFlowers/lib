@@ -6,7 +6,7 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib
 
-matplotlib.use("qtagg")
+matplotlib.use("tkagg")
 import glob
 
 
