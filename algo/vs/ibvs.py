@@ -68,8 +68,8 @@ class IBVS:
         ref_kp, cur_kp, match_img = self.kp_extractor.match(
             ref_img, cur_img, mask, True, self.camera
         )
-        ref_kp_int = ref_kp.round().astype(int)
-        cur_kp_int = cur_kp.round().astype(int)
+        ref_kp_int = np.floor(ref_kp).astype(int)
+        cur_kp_int = np.floor(cur_kp).astype(int)
         ref_kp_x = ref_kp_int[:, 0]
         ref_kp_y = ref_kp_int[:, 1]
         cur_kp_x = cur_kp_int[:, 0]
@@ -96,4 +96,3 @@ class IBVS:
             2,
         )
         return vel, score, match_img
-    
