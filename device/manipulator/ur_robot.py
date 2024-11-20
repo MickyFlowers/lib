@@ -85,7 +85,7 @@ class UR(Manipulator):
             return False
         q = self.rtde_c.getInverseKinematics(pose_vec)
         q_cur = self.rtde_r.getActualQ()
-        if np.abs(np.array(q[:3]) - np.array(q_cur[:3])).max() > np.pi / 2:
+        if np.abs(np.array(q[:3]) - np.array(q_cur[:3])).max() > np.pi / 3 or q[2] > 0:
             return False
         else:
             q += jnt_error
