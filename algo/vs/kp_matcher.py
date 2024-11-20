@@ -28,7 +28,7 @@ class RomaMatchAlgo:
             kptsA.cpu().numpy(),
             kptsB.cpu().numpy(),
             ransacReprojThreshold=0.2,
-            method=cv2.USAC_MAGSAC,
+            method=cv2.RANSAC,
             confidence=0.999999,
             maxIters=10000,
         )
@@ -85,7 +85,7 @@ class RomaMatchAlgo:
 
 
 class KpMatchAlgo:
-    def __init__(self, kp_extractor: str = "SIFT", match_threshold=0.5) -> None:
+    def __init__(self, kp_extractor: str = "SIFT", match_threshold=0.75) -> None:
         self.match_threshold = match_threshold
         self.kp_extractor = self._parser_kp_extractor(kp_extractor)
         self.matcher = cv2.FlannBasedMatcher()

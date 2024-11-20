@@ -49,6 +49,7 @@ class UR(Manipulator):
     def stop(self, acc=10.0) -> None:
         self.rtde_c.stopL(acc)
         self.rtde_c.stopJ(acc)
+        self.rtde_c.speedStop(acc)
 
     def disconnect(self) -> None:
         self.stop()
@@ -80,6 +81,13 @@ class UR(Manipulator):
         rot_matrix = tcp_pose[:3, :3]
         rot_vec = R.from_matrix(rot_matrix).as_rotvec()
         pose_vec = np.concatenate((pos_vec, rot_vec))
+        if not self.rtde_c.getInverseKinematicsHasSolution(pose_vec):
+            return False
         q = self.rtde_c.getInverseKinematics(pose_vec)
-        q += jnt_error
-        self.rtde_c.moveJ(q, vel, acc, asynchronous)
+        q_cur = self.rtde_r.getActualQ()
+        if np.abs(np.array(q[:3]) - np.array(q_cur[:3])).max() > np.pi / 2:
+            return False
+        else:
+            q += jnt_error
+            self.rtde_c.moveJ(q, vel, acc, asynchronous)
+            return True
