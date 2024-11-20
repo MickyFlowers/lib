@@ -133,6 +133,7 @@ class RealSenseCamera(Camera):
         short_range=True,
         exposure_time=None,
         align_to=rs.stream.color,
+        serail_number=None,
     ):
         super().__init__()
 
@@ -140,6 +141,8 @@ class RealSenseCamera(Camera):
         self.pipeline = rs.pipeline()
 
         config = rs.config()
+        if serail_number is not None:
+            config.enable_device(serail_number)
         config.enable_stream(
             rs.stream.depth, color_width, color_height, rs.format.z16, frame_rate
         )
