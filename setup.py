@@ -10,6 +10,7 @@ setup(
         "opencv-python",
         "matplotlib",
         "scipy",
+        "ur-rtde",
     ],
     entry_points={
         "console_scripts": [],

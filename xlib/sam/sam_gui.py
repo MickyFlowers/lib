@@ -14,14 +14,17 @@ class SAM:
     def __init__(
         self,
         model_type: str = "default",
-        model_path: str = "sam_vit_h_4b8939.pth",
+        model_file: str = "sam_vit_h_4b8939.pth",
         device: str = "cuda:0",
     ) -> None:
         assert model_type in ["default", "vit_h", "vit_b", "vit_l"]
         print(f"Loading Model...")
         print(f"Model Type: {model_type}")
-        print(f"Model Checkpoint: {model_path}")
-        model_path = os.path.join(os.path.dirname(__file__), "model", model_path)
+        print(f"Model Checkpoint: {model_file}")
+        model_path = os.path.join(os.path.dirname(__file__), "model", model_file)
+        if not os.path.exists(model_path):
+            print(f"Model checkpoint not found at {model_path}. Downloading...")
+            os.system(f"wget https://dl.fbaipublicfiles.com/segment_anything/{model_file} -O {model_path}")
         sam = sam_model_registry[model_type](checkpoint=model_path)
         sam.to(device=device)
         self.predictor = SamPredictor(sam)
