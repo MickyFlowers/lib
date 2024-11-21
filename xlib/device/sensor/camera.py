@@ -2,6 +2,7 @@ import numpy as np
 import pyrealsense2 as rs
 import cv2
 import logging
+from ...algo.cv.detector import get_aruco_pose
 
 
 class Camera:
@@ -121,6 +122,11 @@ class Camera:
             raise ValueError("Do not set camera parameters")
         return np.stack([x, y], axis=-1)
 
+    def get_aruco_pose(self, config):
+        return get_aruco_pose(
+            config, self._color_img, self.intrinsics_matrix, self.distortion
+        )
+
 
 class RealSenseCamera(Camera):
     def __init__(
@@ -130,7 +136,7 @@ class RealSenseCamera(Camera):
         depth_width=640,
         depth_height=480,
         frame_rate=30,
-        short_range=True,
+        short_range=None,
         exposure_time=None,
         align_to=rs.stream.color,
         serail_number=None,
@@ -143,11 +149,12 @@ class RealSenseCamera(Camera):
         config = rs.config()
         if serail_number is not None:
             config.enable_device(serail_number)
+
         config.enable_stream(
-            rs.stream.depth, color_width, color_height, rs.format.z16, frame_rate
+            rs.stream.color, color_width, color_height, rs.format.bgr8, frame_rate
         )
         config.enable_stream(
-            rs.stream.color, depth_width, depth_height, rs.format.bgr8, frame_rate
+            rs.stream.depth, depth_width, depth_height, rs.format.z16, frame_rate
         )
         cfg = self.pipeline.start(config)
 
@@ -161,9 +168,9 @@ class RealSenseCamera(Camera):
         else:
             color_sensor.set_option(rs.option.enable_auto_exposure, 1)
         if short_range:
-            depth_sensor.set_option(rs.option.visual_preset, 3)
+            depth_sensor.set_option(rs.option.visual_preset, 5)
         else:
-            depth_sensor.set_option(rs.option.visual_preset, 4)
+            depth_sensor.set_option(rs.option.visual_preset, 3)
         self.depth_scale = depth_sensor.get_depth_scale()
         profile = cfg.get_stream(rs.stream.color)
         intrinsics = profile.as_video_stream_profile().get_intrinsics()
