@@ -7,12 +7,17 @@ xlib.egg-info/requires.txt
 xlib.egg-info/top_level.txt
 xlib/algo/__init__.py
 xlib/algo/calibrator.py
+xlib/algo/cv/__init__.py
+xlib/algo/cv/detector.py
 xlib/algo/utils/__init__.py
 xlib/algo/utils/metric.py
 xlib/algo/utils/random.py
 xlib/algo/utils/transforms.py
 xlib/algo/vs/__init__.py
 xlib/algo/vs/kp_matcher.py
+xlib/algo/vs/vs_controller/__init__.py
+xlib/algo/vs/vs_controller/ibvs.py
+xlib/algo/vs/vs_controller/vs_controller_base.py
 xlib/device/__init__.py
 xlib/device/device_base/__init__.py
 xlib/device/device_base/button.py
