@@ -1,3 +1,3 @@
-[submodule "algo/RoMa"]
+[submodule "xlib/algo/RoMa"]
 	path = xlib/algo/RoMa
 	url = https://github.com/MickyFlowers/RoMa.git
